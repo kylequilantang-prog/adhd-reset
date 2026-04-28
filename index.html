@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#c9dde4" />
+  <title>reset</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body, #root { height: 100%; width: 100%; }
+    body { overscroll-behavior: none; font-family: 'DM Sans', system-ui, sans-serif; }
+    button { font-family: inherit; }
+    @keyframes tapPulse {
+      0% { transform: scale(0.94); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+    .loading {
+      position: fixed; inset: 0; display: flex;
+      align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at top, #d8e9e3 0%, #c9dde4 45%, #b8cdd8 100%);
+      font-family: 'Fraunces', serif; font-style: italic; font-weight: 300;
+      font-size: 22px; color: #3d5757;
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div class="loading">loading…</div>
+  </div>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel" data-presets="react">
+    const { useState, useEffect, useRef } = React;
+
+    function WindIcon({ size }) {
+      size = size || 24;
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2" />
+          <path d="M9.6 4.6A2 2 0 1 1 11 8H2" />
+          <path d="M12.6 19.4A2 2 0 1 0 14 16H2" />
+        </svg>
+      );
+    }
+    function EyeIcon({ size }) {
+      size = size || 24;
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+      );
+    }
+    function ArrowLeftIcon({ size }) {
+      size = size || 18;
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M19 12H5" />
+          <path d="M12 19l-7-7 7-7" />
+        </svg>
+      );
+    }
+    function VibrateIcon({ size, off }) {
+      size = size || 14;
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2 8l2 2-2 2 2 2-2 2" />
+          <path d="M22 8l-2 2 2 2-2 2 2 2" />
+          <rect x="8" y="5" width="8" height="14" rx="1" />
+          {off ? <line x1="3" y1="3" x2="21" y2="21" /> : null}
+        </svg>
+      );
+    }
+
+    const store = {
+      get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+      set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+    };
+
+    function App() {
+      const [screen, setScreen] = useState("home");
+      const [hapticOn, setHapticOn] = useState(true);
+
+      useEffect(() => {
+        if (store.get("haptic_pref") === "off") setHapticOn(false);
+      }, []);
+
+      function toggleHaptic() {
+        const next = !hapticOn;
+        setHapticOn(next);
+        store.set("haptic_pref", next ? "on" : "off");
+      }
+
+      return (
+        <div style={{
+          minHeight: "100vh", width: "100%",
+          background: "radial-gradient(ellipse at top, #d8e9e3 0%, #c9dde4 45%, #b8cdd8 100%)",
+          color: "#2d4a4a", position: "relative", overflow: "hidden"
+        }}>
+          <div style={{
+            position: "relative", zIndex: 1, maxWidth: 480,
+            margin: "0 auto", minHeight: "100vh",
+            display: "flex", flexDirection: "column"
+          }}>
+            {screen === "home" ? <Home go={setScreen} hapticOn={hapticOn} toggleHaptic={toggleHaptic} /> : null}
+            {screen === "breathing" ? <Breathing back={() => setScreen("home")} hapticOn={hapticOn} /> : null}
+            {screen === "grounding" ? <Grounding back={() => setScreen("home")} hapticOn={hapticOn} /> : null}
+          </div>
+        </div>
+      );
+    }
+
+    function Home({ go, hapticOn, toggleHaptic }) {
+      return (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "32px 24px 40px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 56 }}>
+            <div style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 300, fontSize: 22, color: "#3d5757" }}>reset</div>
+            <button onClick={toggleHaptic} style={{
+              background: "rgba(255,255,255,0.4)",
+              border: "1px solid rgba(61,87,87,0.15)",
+              borderRadius: 999, padding: "8px 12px",
+              display: "flex", alignItems: "center", gap: 6,
+              cursor: "pointer", fontSize: 12, color: "#3d5757"
+            }}>
+              <VibrateIcon size={14} off={!hapticOn} />
+              <span>{hapticOn ? "haptic on" : "haptic off"}</span>
+            </button>
+          </div>
+
+          <div style={{ marginBottom: 48 }}>
+            <h1 style={{
+              fontFamily: "'Fraunces', serif", fontWeight: 300,
+              fontSize: 44, lineHeight: 1.1, letterSpacing: "-0.02em",
+              margin: 0, color: "#1f3838"
+            }}>
+              breathe<br /><em style={{ fontWeight: 300 }}>or notice.</em>
+            </h1>
+            <p style={{ fontSize: 14, lineHeight: 1.6, color: "#5a7575", marginTop: 16, maxWidth: 320 }}>
+              Pick one. Your nervous system will follow.
+            </p>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
+            <BigButton onClick={() => go("breathing")} title="Box Breathing" subtitle="4 · 4 · 6 · 4 — reset the system" accent="#a8c5bd" iconType="wind" />
+            <BigButton onClick={() => go("grounding")} title="5 — 4 — 3 — 2 — 1" subtitle="anchor in your senses" accent="#b6c8d6" iconType="eye" />
+          </div>
+
+          <div style={{
+            textAlign: "center", fontSize: 11, color: "#7a9090",
+            letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 32
+          }}>you're already doing the work</div>
+        </div>
+      );
+    }
+
+    function BigButton({ onClick, title, subtitle, accent, iconType }) {
+      const [pressed, setPressed] = useState(false);
+      return (
+        <button
+          onClick={onClick}
+          onPointerDown={() => setPressed(true)}
+          onPointerUp={() => setPressed(false)}
+          onPointerLeave={() => setPressed(false)}
+          style={{
+            textAlign: "left", background: "rgba(255,255,255,0.7)",
+            border: "1px solid rgba(255,255,255,0.7)",
+            borderRadius: 24, padding: "28px 24px",
+            display: "flex", alignItems: "center", gap: 20,
+            cursor: "pointer",
+            transition: "transform 200ms ease, box-shadow 200ms ease",
+            transform: pressed ? "scale(0.98)" : "scale(1)",
+            boxShadow: pressed ? "0 4px 12px rgba(45,74,74,0.08)" : "0 8px 28px rgba(45,74,74,0.12)",
+            color: "inherit", width: "100%"
+          }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: "50%",
+            background: accent, display: "flex",
+            alignItems: "center", justifyContent: "center",
+            color: "#1f3838", flexShrink: 0
+          }}>
+            {iconType === "wind" ? <WindIcon size={28} /> : <EyeIcon size={28} />}
+          </div>
+          <div>
+            <div style={{
+              fontFamily: "'Fraunces', serif", fontWeight: 400,
+              fontSize: 22, color: "#1f3838", letterSpacing: "-0.01em"
+            }}>{title}</div>
+            <div style={{ fontSize: 13, color: "#5a7575", marginTop: 4 }}>{subtitle}</div>
+          </div>
+        </button>
+      );
+    }
+
+    function Breathing({ back, hapticOn }) {
+      const PHASES = [
+        { name: "inhale", duration: 4000 },
+        { name: "hold", duration: 4000 },
+        { name: "exhale", duration: 6000 },
+        { name: "hold", duration: 4000 }
+      ];
+      const [running, setRunning] = useState(false);
+      const [phaseIdx, setPhaseIdx] = useState(0);
+      const [duration, setDuration] = useState(3);
+      const [elapsed, setElapsed] = useState(0);
+      const startRef = useRef(null);
+      const phaseTimeoutRef = useRef(null);
+      const tickRef = useRef(null);
+
+      const totalSeconds = duration * 60;
+      const remaining = Math.max(0, totalSeconds - elapsed);
+      const phase = PHASES[phaseIdx];
+
+      function buzz(ms) {
+        if (hapticOn && navigator.vibrate) navigator.vibrate(ms || 30);
+      }
+
+      useEffect(() => {
+        if (!running) return;
+        buzz(40);
+        phaseTimeoutRef.current = setTimeout(() => {
+          setPhaseIdx((i) => (i + 1) % PHASES.length);
+        }, phase.duration);
+        return () => clearTimeout(phaseTimeoutRef.current);
+      }, [running, phaseIdx]);
+
+      useEffect(() => {
+        if (!running) return;
+        startRef.current = Date.now() - elapsed * 1000;
+        tickRef.current = setInterval(() => {
+          const sec = Math.floor((Date.now() - startRef.current) / 1000);
+          setElapsed(sec);
+          if (sec >= totalSeconds) stop(true);
+        }, 250);
+        return () => clearInterval(tickRef.current);
+      }, [running]);
+
+      function start() { setElapsed(0); setPhaseIdx(0); setRunning(true); }
+      function stop(completed) {
+        setRunning(false);
+        clearTimeout(phaseTimeoutRef.current);
+        clearInterval(tickRef.current);
+        if (completed && hapticOn && navigator.vibrate) navigator.vibrate([60, 80, 60]);
+      }
+
+      function fmt(s) { return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+      function scaleFor(p) {
+        if (p.name === "inhale") return 1;
+        if (p.name === "exhale") return 0.55;
+        if (phaseIdx === 1) return 1;
+        return 0.55;
+      }
+
+      const orbScale = running ? scaleFor(phase) : 0.75;
+      const orbTransition = "transform " + (running ? phase.duration : 800) + "ms cubic-bezier(0.4, 0, 0.2, 1)";
+
+      return (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "24px 24px 40px" }}>
+          <BackBar onBack={back} label="box breathing" />
+          <div style={{
+            flex: 1, display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center", gap: 32
+          }}>
+            <div style={{
+              width: 280, height: 280, display: "flex",
+              alignItems: "center", justifyContent: "center", position: "relative"
+            }}>
+              <div style={{
+                position: "absolute", width: "100%", height: "100%",
+                borderRadius: "50%", border: "1px solid rgba(61,87,87,0.18)"
+              }} />
+              <div style={{
+                width: 220, height: 220, borderRadius: "50%",
+                background: "radial-gradient(circle at 30% 30%, #e8f1ed 0%, #a8c5bd 60%, #7fa89d 100%)",
+                transform: "scale(" + orbScale + ")",
+                transition: orbTransition,
+                boxShadow: "0 12px 40px rgba(127,168,157,0.35), inset 0 -8px 20px rgba(127,168,157,0.2)",
+                display: "flex", alignItems: "center", justifyContent: "center"
+              }}>
+                <div style={{
+                  fontFamily: "'Fraunces', serif", fontStyle: "italic",
+                  fontWeight: 300, fontSize: 28, color: "#1f3838", textAlign: "center"
+                }}>{running ? phase.name : "ready"}</div>
+              </div>
+            </div>
+
+            <div style={{
+              fontFamily: "'Fraunces', serif", fontWeight: 300,
+              fontSize: 32, color: "#3d5757", letterSpacing: "0.02em"
+            }}>{running ? fmt(remaining) : fmt(totalSeconds)}</div>
+
+            {!running ? (
+              <div style={{ display: "flex", gap: 12 }}>
+                {[1, 3, 5].map((m) => (
+                  <button key={m} onClick={() => setDuration(m)} style={{
+                    background: duration === m ? "rgba(127,168,157,0.9)" : "rgba(255,255,255,0.7)",
+                    color: duration === m ? "#fff" : "#3d5757",
+                    border: "1px solid rgba(61,87,87,0.15)",
+                    borderRadius: 999, padding: "10px 20px", fontSize: 13,
+                    cursor: "pointer"
+                  }}>{m} min</button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          <button onClick={running ? () => stop(false) : start} style={{
+            background: running ? "rgba(255,255,255,0.7)" : "linear-gradient(135deg, #7fa89d 0%, #5e8a7f 100%)",
+            color: running ? "#3d5757" : "#fff",
+            border: "1px solid rgba(255,255,255,0.7)",
+            borderRadius: 999, padding: "20px",
+            fontFamily: "'Fraunces', serif", fontSize: 18,
+            fontStyle: "italic", fontWeight: 400,
+            cursor: "pointer",
+            boxShadow: running ? "none" : "0 8px 24px rgba(94,138,127,0.35)",
+            transition: "all 200ms ease"
+          }}>{running ? "end session" : "begin"}</button>
+        </div>
+      );
+    }
+
+    function Grounding({ back, hapticOn }) {
+      const STEPS = [
+        { n: 5, sense: "see", prompt: "Find 5 things you can see.", hint: "Big things. Small things. Look up. Look down.", color: "#b6c8d6" },
+        { n: 4, sense: "feel", prompt: "Find 4 things you can feel.", hint: "Your feet on the ground. Fabric on skin. Air.", color: "#c4c8d8" },
+        { n: 3, sense: "hear", prompt: "Find 3 things you can hear.", hint: "Close your eyes if you can. Layer by layer.", color: "#c8c0d4" },
+        { n: 2, sense: "smell", prompt: "Find 2 things you can smell.", hint: "Or 2 scents you like, if nothing's around.", color: "#d4c0c8" },
+        { n: 1, sense: "taste", prompt: "Find 1 thing you can taste.", hint: "Even just the inside of your mouth counts.", color: "#d4c8b8" }
+      ];
+      const [idx, setIdx] = useState(0);
+      const [count, setCount] = useState(0);
+      const [done, setDone] = useState(false);
+      const step = STEPS[idx];
+
+      function tap() {
+        if (count + 1 < step.n) {
+          if (hapticOn && navigator.vibrate) navigator.vibrate(20);
+          setCount(count + 1);
+        } else {
+          if (idx < STEPS.length - 1) {
+            if (hapticOn && navigator.vibrate) navigator.vibrate([30, 50, 30]);
+            setIdx(idx + 1);
+            setCount(0);
+          } else {
+            if (hapticOn && navigator.vibrate) navigator.vibrate([40, 80, 40, 80, 40]);
+            setDone(true);
+          }
+        }
+      }
+
+      function restart() { setIdx(0); setCount(0); setDone(false); }
+      const remaining = step.n - count;
+      const tapKey = idx + "-" + count;
+
+      return (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "24px 24px 40px" }}>
+          <BackBar onBack={back} label="5 — 4 — 3 — 2 — 1" />
+          {!done ? (
+            <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 24 }}>
+                {STEPS.map((_, i) => (
+                  <div key={i} style={{
+                    width: i === idx ? 24 : 8, height: 8, borderRadius: 999,
+                    background: i <= idx ? "rgba(61,87,87,0.65)" : "rgba(61,87,87,0.18)",
+                    transition: "all 300ms ease"
+                  }} />
+                ))}
+              </div>
+              <div style={{
+                flex: 1, display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "center", gap: 24, textAlign: "center"
+              }}>
+                <button onClick={tap} key={tapKey} style={{
+                  width: 240, height: 240, borderRadius: "50%", border: "none",
+                  background: "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.75) 0%, " + step.color + " 70%)",
+                  display: "flex", flexDirection: "column",
+                  alignItems: "center", justifyContent: "center",
+                  cursor: "pointer", color: "#1f3838",
+                  boxShadow: "0 12px 40px " + step.color + "80",
+                  animation: "tapPulse 400ms ease-out", padding: 0
+                }}>
+                  <div style={{
+                    fontFamily: "'Fraunces', serif", fontWeight: 300,
+                    fontSize: 110, lineHeight: 1, letterSpacing: "-0.04em"
+                  }}>{remaining}</div>
+                  <div style={{
+                    fontFamily: "'Fraunces', serif", fontStyle: "italic",
+                    fontWeight: 300, fontSize: 14, color: "#3d5757",
+                    marginTop: 4, letterSpacing: "0.05em"
+                  }}>tap when found</div>
+                </button>
+                <div style={{ display: "flex", gap: 10, minHeight: 14 }}>
+                  {Array.from({ length: step.n }).map((_, i) => (
+                    <div key={i} style={{
+                      width: 12, height: 12, borderRadius: "50%",
+                      background: i < count ? step.color : "rgba(61,87,87,0.15)",
+                      border: i < count ? "1px solid rgba(61,87,87,0.25)" : "1px solid rgba(61,87,87,0.1)",
+                      transition: "all 300ms ease",
+                      transform: i < count ? "scale(1)" : "scale(0.9)"
+                    }} />
+                  ))}
+                </div>
+                <div>
+                  <div style={{
+                    fontFamily: "'Fraunces', serif", fontStyle: "italic",
+                    fontWeight: 300, fontSize: 13, letterSpacing: "0.18em",
+                    textTransform: "uppercase", color: "#7a9090", marginBottom: 10
+                  }}>things you can {step.sense}</div>
+                  <div style={{
+                    fontFamily: "'Fraunces', serif", fontWeight: 300,
+                    fontSize: 24, color: "#1f3838", lineHeight: 1.3,
+                    letterSpacing: "-0.01em", maxWidth: 320, margin: "0 auto"
+                  }}>{step.prompt}</div>
+                  <div style={{
+                    fontSize: 13, color: "#5a7575", marginTop: 10,
+                    maxWidth: 280, marginLeft: "auto", marginRight: "auto", lineHeight: 1.5
+                  }}>{step.hint}</div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div style={{
+              flex: 1, display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center",
+              textAlign: "center", gap: 24
+            }}>
+              <div style={{
+                width: 120, height: 120, borderRadius: "50%",
+                background: "radial-gradient(circle at 30% 30%, #e8f1ed 0%, #a8c5bd 100%)",
+                boxShadow: "0 12px 40px rgba(127,168,157,0.35)"
+              }} />
+              <div>
+                <div style={{
+                  fontFamily: "'Fraunces', serif", fontWeight: 300,
+                  fontSize: 36, color: "#1f3838", letterSpacing: "-0.02em"
+                }}><em>you're here.</em></div>
+                <div style={{
+                  fontSize: 14, color: "#5a7575", marginTop: 12,
+                  maxWidth: 280, lineHeight: 1.6
+                }}>Notice what shifted. Even a little is something.</div>
+              </div>
+              <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
+                <button onClick={restart} style={{
+                  background: "rgba(255,255,255,0.7)", color: "#3d5757",
+                  border: "1px solid rgba(61,87,87,0.15)", borderRadius: 999,
+                  padding: "14px 28px", fontSize: 14, cursor: "pointer"
+                }}>again</button>
+                <button onClick={back} style={{
+                  background: "linear-gradient(135deg, #8ba6b8 0%, #6b8a9d 100%)",
+                  color: "#fff", border: "none", borderRadius: 999,
+                  padding: "14px 28px", fontSize: 14, cursor: "pointer"
+                }}>done</button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function BackBar({ onBack, label }) {
+      return (
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+          <button onClick={onBack} style={{
+            background: "rgba(255,255,255,0.7)",
+            border: "1px solid rgba(61,87,87,0.15)",
+            borderRadius: "50%", width: 40, height: 40,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", color: "#3d5757"
+          }}>
+            <ArrowLeftIcon size={18} />
+          </button>
+          <div style={{
+            fontFamily: "'Fraunces', serif", fontStyle: "italic",
+            fontWeight: 300, fontSize: 18, color: "#3d5757", letterSpacing: "0.02em"
+          }}>{label}</div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>
